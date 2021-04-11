@@ -1,49 +1,19 @@
-env_defaults: &env_defaults
-  working_directory: ~
-  docker:
-    - image: circleci/node:14.15.1
-
 version: 2.1
 jobs:
-  prepare:
-    <<: *env_defaults
+  test:
+    executor:
+      name: node/default
+      tag: '12.6'
     steps:
       - checkout
-
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v1.0-dependencies-{{ checksum "yarn.lock" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1.0-dependencies-
-
       - node/install-packages:
           pkg-manager: yarn
-
-      - run: yarn install
-
-      - save_cache:
-          paths:
-            - node_modules
-          key: v1.0-dependencies-{{ checksum "yarn.lock" }}
-
-      - persist_to_workspace:
-          root: .
-          paths:
-            - node_modules
-
-  test:
-    <<: *env_defaults
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
       - run:
           command: yarn chain
           name: Start blockchain
           background: true
       - run:
-          # Wait for the blockchain to start at port 8545. We expect a 400 response so we
+          # Wait for the blockchain to start at port 8545. We expect a 400 response so we 
           # override the shell and have the last command be the : { null } command to force exit code 0.
           shell: /bin/sh
           command: |
@@ -52,18 +22,13 @@ jobs:
           name: Wait for blockchain to start
       - run:
           command: yarn run test
-          name: Run Tests
-
+          name: Run tests
 orbs:
   node: circleci/node@4.1.0
 workflows:
-  testAndBuild:
+  test_contracts:
     jobs:
       - test:
-          requires:
-            - prepare
-          filters:
-            branches:
-              only: master
-
-
+        filters:
+          branches:
+            only: master
