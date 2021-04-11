@@ -54,30 +54,16 @@ jobs:
           command: yarn run test
           name: Run Tests
 
-  build:
-    <<: *env_defaults
-    steps:
-      - checkout
-      - attach_workspace:
-          at: .
-      - run:
-          command: yarn run build
-          name: Build
-
 orbs:
   node: circleci/node@4.1.0
 workflows:
   testAndBuild:
     jobs:
-      - prepare:
-          pre-steps:
-            - run:
-                command: echo "registry=https://registry.npmjs.org/" > ~/.npmrc && echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
       - test:
           requires:
             - prepare
-      - build:
-          requires:
-            - test
+          filters:
+            branches:
+              only: master
 
 

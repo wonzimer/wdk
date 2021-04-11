@@ -2,16 +2,7 @@ import { getAddress } from '@ethersproject/address'
 import warning from 'tiny-warning'
 import invariant from 'tiny-invariant'
 import sjcl from 'sjcl'
-import {
-  Ask,
-  Bid,
-  BidShares,
-  DecimalValue,
-  EIP712Domain,
-  EIP712Signature,
-  MediaData,
-} from './types'
-import { Decimal } from './Decimal'
+import { Ask, Bid, EIP712Domain, EIP712Signature, MediaData } from './types'
 import {
   BigNumber,
   BigNumberish,
@@ -72,47 +63,6 @@ export function constructMediaData(
  * @param owner
  * @param prevOwner
  */
-export function constructBidShares(
-  creator: number,
-  owner: number,
-  prevOwner: number
-): BidShares {
-  const decimalCreator = Decimal.new(parseFloat(creator.toFixed(4)))
-  const decimalOwner = Decimal.new(parseFloat(owner.toFixed(4)))
-  const decimalPrevOwner = Decimal.new(parseFloat(prevOwner.toFixed(4)))
-
-  validateBidShares(decimalCreator, decimalOwner, decimalPrevOwner)
-
-  return {
-    creator: decimalCreator,
-    owner: decimalOwner,
-    prevOwner: decimalPrevOwner,
-  }
-}
-
-/**
- * Validates that BidShares sum to 100
- *
- * @param creator
- * @param owner
- * @param prevOwner
- */
-export function validateBidShares(
-  creator: DecimalValue,
-  owner: DecimalValue,
-  prevOwner: DecimalValue
-): void {
-  const decimal100 = Decimal.new(100)
-
-  const sum = creator.value.add(owner.value).add(prevOwner.value)
-
-  if (sum.toString() != decimal100.value.toString()) {
-    invariant(
-      false,
-      `The BidShares sum to ${sum.toString()}, but they must sum to ${decimal100.value.toString()}`
-    )
-  }
-}
 
 /**
  * Constructs an Ask.
@@ -141,8 +91,7 @@ export function constructBid(
   currency: string,
   amount: BigNumberish,
   bidder: string,
-  recipient: string,
-  sellOnShare: number
+  recipient: string
 ): Bid {
   let parsedCurrency: string
   let parsedBidder: string
@@ -166,14 +115,11 @@ export function constructBid(
     throw new Error(`Recipient address is invalid: ${err.message}`)
   }
 
-  const decimalSellOnShare = Decimal.new(parseFloat(sellOnShare.toFixed(4)))
-
   return {
     currency: parsedCurrency,
     amount: amount,
     bidder: parsedBidder,
     recipient: parsedRecipient,
-    sellOnShare: decimalSellOnShare,
   }
 }
 
@@ -455,7 +401,6 @@ export async function recoverSignatureFromPermit(
 export async function recoverSignatureFromMintWithSig(
   contentHash: BytesLike,
   metadataHash: BytesLike,
-  creatorShareBN: BigNumber,
   nonce: number,
   deadline: number,
   domain: EIP712Domain,
@@ -463,7 +408,6 @@ export async function recoverSignatureFromMintWithSig(
 ) {
   const r = arrayify(eipSig.r)
   const s = arrayify(eipSig.s)
-  const creatorShare = creatorShareBN.toString()
 
   const recovered = recoverTypedSignature({
     data: {
@@ -477,7 +421,6 @@ export async function recoverSignatureFromMintWithSig(
         MintWithSig: [
           { name: 'contentHash', type: 'bytes32' },
           { name: 'metadataHash', type: 'bytes32' },
-          { name: 'creatorShare', type: 'uint256' },
           { name: 'nonce', type: 'uint256' },
           { name: 'deadline', type: 'uint256' },
         ],
@@ -487,7 +430,6 @@ export async function recoverSignatureFromMintWithSig(
       message: {
         contentHash,
         metadataHash,
-        creatorShare,
         nonce,
         deadline,
       },
@@ -512,7 +454,6 @@ export async function signMintWithSigMessage(
   owner: Wallet,
   contentHash: BytesLike,
   metadataHash: BytesLike,
-  creatorShareBN: BigNumber,
   nonce: number,
   deadline: number,
   domain: EIP712Domain
@@ -523,8 +464,6 @@ export async function signMintWithSigMessage(
   } catch (err) {
     return Promise.reject(err.message)
   }
-
-  const creatorShare = creatorShareBN.toString()
 
   return new Promise<EIP712Signature>(async (res, reject) => {
     try {
@@ -540,7 +479,6 @@ export async function signMintWithSigMessage(
             MintWithSig: [
               { name: 'contentHash', type: 'bytes32' },
               { name: 'metadataHash', type: 'bytes32' },
-              { name: 'creatorShare', type: 'uint256' },
               { name: 'nonce', type: 'uint256' },
               { name: 'deadline', type: 'uint256' },
             ],
@@ -550,7 +488,6 @@ export async function signMintWithSigMessage(
           message: {
             contentHash,
             metadataHash,
-            creatorShare,
             nonce,
             deadline,
           },

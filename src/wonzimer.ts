@@ -1,5 +1,4 @@
 import { Ask, Bid, BidShares, EIP712Domain, EIP712Signature, MediaData } from './types'
-import { Decimal } from './Decimal'
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { Provider } from '@ethersproject/providers'
@@ -11,7 +10,6 @@ import {
   constructMediaData,
   isMediaDataVerified,
   validateAndParseAddress,
-  validateBidShares,
   validateURI,
 } from './utils'
 import invariant from 'tiny-invariant'
@@ -112,7 +110,15 @@ export class Wonzimer {
    * @param mediaId
    */
   public async fetchCurrentBidShares(mediaId: BigNumberish): Promise<BidShares> {
-    return this.market.bidSharesForToken(mediaId)
+    const [creator, owner] = await Promise.all([
+      this.fetchCreator(mediaId),
+      this.fetchOwnerOf(mediaId),
+    ])
+    if (creator === owner) {
+      return this.market.shareFirstTime()
+    } else {
+      return this.market.shareOnSale()
+    }
   }
 
   /**
@@ -204,22 +210,18 @@ export class Wonzimer {
    * @param mintData
    * @param bidShares
    */
-  public async mint(
-    mediaData: MediaData,
-    bidShares: BidShares
-  ): Promise<ContractTransaction> {
+  public async mint(mediaData: MediaData): Promise<ContractTransaction> {
     try {
       this.ensureNotReadOnly()
       validateURI(mediaData.metadataURI)
       validateURI(mediaData.tokenURI)
-      validateBidShares(bidShares.creator, bidShares.owner, bidShares.prevOwner)
     } catch (err) {
       return Promise.reject(err.message)
     }
 
-    const gasEstimate = await this.media.estimateGas.mint(mediaData, bidShares)
+    const gasEstimate = await this.media.estimateGas.mint(mediaData)
     const paddedEstimate = gasEstimate.mul(110).div(100)
-    return this.media.mint(mediaData, bidShares, { gasLimit: paddedEstimate })
+    return this.media.mint(mediaData, { gasLimit: paddedEstimate })
   }
 
   /**
@@ -232,19 +234,17 @@ export class Wonzimer {
   public async mintWithSig(
     creator: string,
     mediaData: MediaData,
-    bidShares: BidShares,
     sig: EIP712Signature
   ): Promise<ContractTransaction> {
     try {
       this.ensureNotReadOnly()
       validateURI(mediaData.metadataURI)
       validateURI(mediaData.tokenURI)
-      validateBidShares(bidShares.creator, bidShares.owner, bidShares.prevOwner)
     } catch (err) {
       return Promise.reject(err.message)
     }
 
-    return this.media.mintWithSig(creator, mediaData, bidShares, sig)
+    return this.media.mintWithSig(creator, mediaData, sig)
   }
 
   /**
@@ -539,14 +539,8 @@ export class Wonzimer {
    * @param bid
    */
   public async isValidBid(mediaId: BigNumberish, bid: Bid): Promise<boolean> {
-    const isAmountValid = await this.market.isValidBid(mediaId, bid.amount)
-    const decimal100 = Decimal.new(100)
-    const currentBidShares = await this.fetchCurrentBidShares(mediaId)
-    const isSellOnShareValid = bid.sellOnShare.value.lte(
-      decimal100.value.sub(currentBidShares.creator.value)
-    )
-
-    return isAmountValid && isSellOnShareValid
+    console.log(bid.amount)
+    return this.market.isValidBid(mediaId, bid.amount)
   }
 
   /**
@@ -555,7 +549,7 @@ export class Wonzimer {
    * @param mediaId
    * @param ask
    */
-  public isValidAsk(mediaId: BigNumberish, ask: Ask): Promise<boolean> {
+  public async isValidAsk(mediaId: BigNumberish, ask: Ask): Promise<boolean> {
     return this.market.isValidBid(mediaId, ask.amount)
   }
 

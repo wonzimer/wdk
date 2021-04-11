@@ -1,18 +1,14 @@
-import { BigNumber, BigNumberish } from '@ethersproject/bignumber'
+import { BigNumberish } from '@ethersproject/bignumber'
 import { BytesLike } from '@ethersproject/bytes'
-
-/**
- * Internal type to represent a Decimal Value
- */
-export type DecimalValue = { value: BigNumber }
 
 /**
  * Wonzimer Media Protocol BidShares
  */
 export type BidShares = {
-  owner: DecimalValue
-  prevOwner: DecimalValue
-  creator: DecimalValue
+  creator: BigNumberish
+  galery: BigNumberish
+  owner: BigNumberish
+  prevOwner: BigNumberish
 }
 
 /**
@@ -31,7 +27,6 @@ export type Bid = {
   amount: BigNumberish
   bidder: string
   recipient: string
-  sellOnShare: DecimalValue
 }
 
 /**
