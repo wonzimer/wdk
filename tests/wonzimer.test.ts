@@ -1,12 +1,9 @@
 import {
   Ask,
   Bid,
-  BidShares,
   constructAsk,
   constructBid,
-  constructBidShares,
   constructMediaData,
-  Decimal,
   EIP712Signature,
   generateMetadata,
   MediaData,
@@ -179,7 +176,6 @@ describe('Wonzimer', () => {
       let minifiedMetadata: string
 
       let defaultMediaData: MediaData
-      let defaultBidShares: BidShares
       let defaultAsk: Ask
       let defaultBid: Bid
       let eipSig: EIP712Signature
@@ -201,14 +197,12 @@ describe('Wonzimer', () => {
           contentHash,
           metadataHash
         )
-        defaultBidShares = constructBidShares(10, 90, 0)
-        defaultAsk = constructAsk(wonzimerConfig.currency, Decimal.new(100).value)
+        defaultAsk = constructAsk(wonzimerConfig.currency, BigNumber.from(100))
         defaultBid = constructBid(
           wonzimerConfig.currency,
-          Decimal.new(99).value,
+          BigNumber.from(99),
           otherWallet.address,
-          otherWallet.address,
-          10
+          otherWallet.address
         )
 
         eipSig = {
@@ -243,7 +237,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await wonzimer.mint(defaultMediaData, defaultBidShares)
+          await wonzimer.mint(defaultMediaData)
           await expect(wonzimer.updateContentURI(0, 'http://example.com')).rejects.toBe(
             'Invariant failed: http://example.com must begin with `https://`'
           )
@@ -256,7 +250,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
 
           const tokenURI = await mainWonzimer.fetchContentURI(0)
           expect(tokenURI).toEqual(defaultMediaData.tokenURI)
@@ -292,7 +286,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await wonzimer.mint(defaultMediaData, defaultBidShares)
+          await wonzimer.mint(defaultMediaData)
           await expect(wonzimer.updateMetadataURI(0, 'http://example.com')).rejects.toBe(
             'Invariant failed: http://example.com must begin with `https://`'
           )
@@ -305,7 +299,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
 
           const metadataURI = await mainWonzimer.fetchMetadataURI(0)
           expect(metadataURI).toEqual(defaultMediaData.metadataURI)
@@ -329,27 +323,8 @@ describe('Wonzimer', () => {
           )
           expect(wonzimer.readOnly).toBe(true)
 
-          await expect(wonzimer.mint(defaultMediaData, defaultBidShares)).rejects.toBe(
+          await expect(wonzimer.mint(defaultMediaData)).rejects.toBe(
             'ensureNotReadOnly: readOnly Wonzimer instance cannot call contract methods that require a signer.'
-          )
-        })
-
-        it('throws an error if bid shares do not sum to 100', async () => {
-          const wonzimer = new Wonzimer(
-            otherWallet,
-            50,
-            wonzimerConfig.media,
-            wonzimerConfig.market
-          )
-          const invalidBidShares = {
-            prevOwner: Decimal.new(10),
-            owner: Decimal.new(70),
-            creator: Decimal.new(10),
-          }
-          expect(wonzimer.readOnly).toBe(false)
-
-          await expect(wonzimer.mint(defaultMediaData, invalidBidShares)).rejects.toBe(
-            'Invariant failed: The BidShares sum to 90000000000000000000, but they must sum to 100000000000000000000'
           )
         })
 
@@ -368,7 +343,7 @@ describe('Wonzimer', () => {
           }
           expect(wonzimer.readOnly).toBe(false)
 
-          await expect(wonzimer.mint(invalidMediaData, defaultBidShares)).rejects.toBe(
+          await expect(wonzimer.mint(invalidMediaData)).rejects.toBe(
             'Invariant failed: http://example.com must begin with `https://`'
           )
         })
@@ -388,7 +363,7 @@ describe('Wonzimer', () => {
           }
           expect(wonzimer.readOnly).toBe(false)
 
-          await expect(wonzimer.mint(invalidMediaData, defaultBidShares)).rejects.toBe(
+          await expect(wonzimer.mint(invalidMediaData)).rejects.toBe(
             'Invariant failed: http://metadata.com must begin with `https://`'
           )
         })
@@ -396,14 +371,14 @@ describe('Wonzimer', () => {
         it('pads the gas limit by 10%', async () => {
           const otherWonzimerConfig = await setupWonzimer(otherWallet, [mainWallet])
           const wonzimerMedia = MediaFactory.connect(wonzimerConfig.media, mainWallet)
-          const tx = await wonzimerMedia.mint(defaultMediaData, defaultBidShares)
+          const tx = await wonzimerMedia.mint(defaultMediaData)
           const otherWonzimer = new Wonzimer(
             otherWallet,
             50,
             otherWonzimerConfig.media,
             otherWonzimerConfig.market
           )
-          const paddedTx = await otherWonzimer.mint(defaultMediaData, defaultBidShares)
+          const paddedTx = await otherWonzimer.mint(defaultMediaData)
 
           expect(paddedTx.gasLimit).toEqual(tx.gasLimit.mul(110).div(100))
         })
@@ -418,14 +393,13 @@ describe('Wonzimer', () => {
           const totalSupply = await mainWonzimer.fetchTotalMedia()
           expect(totalSupply.toNumber()).toEqual(0)
 
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
 
           const owner = await mainWonzimer.fetchOwnerOf(0)
           const creator = await mainWonzimer.fetchCreator(0)
           const onChainContentHash = await mainWonzimer.fetchContentHash(0)
           const onChainMetadataHash = await mainWonzimer.fetchMetadataHash(0)
 
-          const onChainBidShares = await mainWonzimer.fetchCurrentBidShares(0)
           const onChainContentURI = await mainWonzimer.fetchContentURI(0)
           const onChainMetadataURI = await mainWonzimer.fetchMetadataURI(0)
 
@@ -435,11 +409,6 @@ describe('Wonzimer', () => {
           expect(onChainContentURI).toBe(defaultMediaData.tokenURI)
           expect(onChainMetadataURI).toBe(defaultMediaData.metadataURI)
           expect(onChainMetadataHash).toBe(metadataHash)
-          expect(onChainBidShares.creator.value).toEqual(defaultBidShares.creator.value)
-          expect(onChainBidShares.owner.value).toEqual(defaultBidShares.owner.value)
-          expect(onChainBidShares.prevOwner.value).toEqual(
-            defaultBidShares.prevOwner.value
-          )
         })
       })
 
@@ -456,40 +425,9 @@ describe('Wonzimer', () => {
           expect(wonzimer.readOnly).toBe(true)
 
           await expect(
-            wonzimer.mintWithSig(
-              otherWallet.address,
-              defaultMediaData,
-              defaultBidShares,
-              eipSig
-            )
+            wonzimer.mintWithSig(otherWallet.address, defaultMediaData, eipSig)
           ).rejects.toBe(
             'ensureNotReadOnly: readOnly Wonzimer instance cannot call contract methods that require a signer.'
-          )
-        })
-
-        it('throws an error if bid shares do not sum to 100', async () => {
-          const wonzimer = new Wonzimer(
-            otherWallet,
-            50,
-            wonzimerConfig.media,
-            wonzimerConfig.market
-          )
-          const invalidBidShares = {
-            prevOwner: Decimal.new(10),
-            owner: Decimal.new(70),
-            creator: Decimal.new(10),
-          }
-          expect(wonzimer.readOnly).toBe(false)
-
-          await expect(
-            wonzimer.mintWithSig(
-              otherWallet.address,
-              defaultMediaData,
-              invalidBidShares,
-              eipSig
-            )
-          ).rejects.toBe(
-            'Invariant failed: The BidShares sum to 90000000000000000000, but they must sum to 100000000000000000000'
           )
         })
 
@@ -509,12 +447,7 @@ describe('Wonzimer', () => {
           expect(wonzimer.readOnly).toBe(false)
 
           await expect(
-            wonzimer.mintWithSig(
-              otherWallet.address,
-              invalidMediaData,
-              defaultBidShares,
-              eipSig
-            )
+            wonzimer.mintWithSig(otherWallet.address, invalidMediaData, eipSig)
           ).rejects.toBe(
             'Invariant failed: http://example.com must begin with `https://`'
           )
@@ -535,7 +468,7 @@ describe('Wonzimer', () => {
           }
           expect(wonzimer.readOnly).toBe(false)
 
-          await expect(wonzimer.mint(invalidMediaData, defaultBidShares)).rejects.toBe(
+          await expect(wonzimer.mint(invalidMediaData)).rejects.toBe(
             'Invariant failed: http://metadata.com must begin with `https://`'
           )
         })
@@ -554,7 +487,6 @@ describe('Wonzimer', () => {
             mainWallet,
             contentHash,
             metadataHash,
-            Decimal.new(10).value,
             nonce.toNumber(),
             deadline,
             domain
@@ -563,19 +495,13 @@ describe('Wonzimer', () => {
           const totalSupply = await otherWonzimer.fetchTotalMedia()
           expect(totalSupply.toNumber()).toEqual(0)
 
-          await otherWonzimer.mintWithSig(
-            mainWallet.address,
-            defaultMediaData,
-            defaultBidShares,
-            eipSig
-          )
+          await otherWonzimer.mintWithSig(mainWallet.address, defaultMediaData, eipSig)
 
           const owner = await otherWonzimer.fetchOwnerOf(0)
           const creator = await otherWonzimer.fetchCreator(0)
           const onChainContentHash = await otherWonzimer.fetchContentHash(0)
           const onChainMetadataHash = await otherWonzimer.fetchMetadataHash(0)
 
-          const onChainBidShares = await otherWonzimer.fetchCurrentBidShares(0)
           const onChainContentURI = await otherWonzimer.fetchContentURI(0)
           const onChainMetadataURI = await otherWonzimer.fetchMetadataURI(0)
 
@@ -585,11 +511,6 @@ describe('Wonzimer', () => {
           expect(onChainContentURI).toBe(defaultMediaData.tokenURI)
           expect(onChainMetadataURI).toBe(defaultMediaData.metadataURI)
           expect(onChainMetadataHash).toBe(metadataHash)
-          expect(onChainBidShares.creator.value).toEqual(defaultBidShares.creator.value)
-          expect(onChainBidShares.owner.value).toEqual(defaultBidShares.owner.value)
-          expect(onChainBidShares.prevOwner.value).toEqual(
-            defaultBidShares.prevOwner.value
-          )
         })
       })
 
@@ -617,7 +538,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
 
           await mainWonzimer.setAsk(0, defaultAsk)
 
@@ -655,7 +576,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
 
           const otherWonzimer = new Wonzimer(
             otherWallet,
@@ -686,7 +607,6 @@ describe('Wonzimer', () => {
           expect(onChainBid.recipient.toLowerCase()).toEqual(
             defaultBid.recipient.toLowerCase()
           )
-          expect(onChainBid.sellOnShare.value).toEqual(defaultBid.sellOnShare.value)
         })
       })
 
@@ -714,7 +634,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
           await mainWonzimer.setAsk(0, defaultAsk)
 
           const onChainAsk = await mainWonzimer.fetchCurrentAsk(0)
@@ -753,7 +673,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
           const otherWonzimer = new Wonzimer(
             otherWallet,
             50,
@@ -776,7 +696,6 @@ describe('Wonzimer', () => {
           expect(onChainBid.recipient.toLowerCase()).toEqual(
             defaultBid.recipient.toLowerCase()
           )
-          expect(onChainBid.sellOnShare.value).toEqual(defaultBid.sellOnShare.value)
 
           await otherWonzimer.removeBid(0)
 
@@ -813,15 +732,15 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
           const otherWonzimer = new Wonzimer(
             otherWallet,
             50,
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await otherWonzimer.setBid(0, defaultBid)
-          await mainWonzimer.acceptBid(0, defaultBid)
+          await otherWonzimer.setBid(0, { ...defaultBid, amount: 110 })
+          await mainWonzimer.acceptBid(0, { ...defaultBid, amount: 110 })
           const newOwner = await otherWonzimer.fetchOwnerOf(0)
           expect(newOwner.toLowerCase()).toEqual(otherWallet.address.toLowerCase())
         })
@@ -851,7 +770,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
           const otherWonzimer = new Wonzimer(
             otherWallet,
             50,
@@ -900,7 +819,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
           await mainWonzimer.approve(otherWallet.address, 0)
           const approved = await mainWonzimer.fetchApproved(0)
           expect(approved.toLowerCase()).toBe(otherWallet.address.toLowerCase())
@@ -941,7 +860,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
 
           const owner = await mainWonzimer.fetchOwnerOf(0)
           expect(owner.toLowerCase()).toEqual(mainWallet.address.toLowerCase())
@@ -980,7 +899,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
           const nullApproved = await mainWonzimer.fetchApproved(0)
           expect(nullApproved).toBe(AddressZero)
           await mainWonzimer.approve(otherWallet.address, 0)
@@ -1015,7 +934,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
           const notApproved = await mainWonzimer.fetchIsApprovedForAll(
             mainWallet.address,
             otherWallet.address
@@ -1063,7 +982,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await mainWonzimer.mint(defaultMediaData, defaultBidShares)
+          await mainWonzimer.mint(defaultMediaData)
           const owner = await mainWonzimer.fetchOwnerOf(0)
           expect(owner.toLowerCase()).toEqual(mainWallet.address.toLowerCase())
 
@@ -1135,8 +1054,8 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await wonzimer.mint(defaultMediaData, defaultBidShares)
-          const isValid = await wonzimer.isValidBid(0, defaultBid)
+          await wonzimer.mint(defaultMediaData)
+          const isValid = await wonzimer.isValidBid(0, { ...defaultBid, amount: 100 })
           expect(isValid).toEqual(true)
         })
 
@@ -1150,40 +1069,12 @@ describe('Wonzimer', () => {
           )
           const bid = constructBid(
             cur,
-            BigNumber.from(200),
+            BigNumber.from(201),
             otherWallet.address,
-            otherWallet.address,
-            10
+            otherWallet.address
           )
 
-          const preciseBidShares = {
-            creator: Decimal.new(33.3333),
-            owner: Decimal.new(33.3333),
-            prevOwner: Decimal.new(33.3334),
-          }
-
-          await wonzimer.mint(defaultMediaData, preciseBidShares)
-          const isValid = await wonzimer.isValidBid(0, bid)
-          expect(isValid).toEqual(false)
-        })
-
-        it('returns false if the sell on share is invalid', async () => {
-          const wonzimer = new Wonzimer(
-            mainWallet,
-            50,
-            wonzimerConfig.media,
-            wonzimerConfig.market
-          )
-          await wonzimer.mint(defaultMediaData, defaultBidShares)
-
-          const bid = constructBid(
-            wonzimerConfig.currency,
-            BigNumber.from(200),
-            otherWallet.address,
-            otherWallet.address,
-            90.1
-          )
-
+          await wonzimer.mint(defaultMediaData)
           const isValid = await wonzimer.isValidBid(0, bid)
           expect(isValid).toEqual(false)
         })
@@ -1197,7 +1088,7 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          await wonzimer.mint(defaultMediaData, defaultBidShares)
+          await wonzimer.mint(defaultMediaData)
           const isValid = await wonzimer.isValidAsk(0, defaultAsk)
           expect(isValid).toEqual(true)
         })
@@ -1210,15 +1101,9 @@ describe('Wonzimer', () => {
             wonzimerConfig.media,
             wonzimerConfig.market
           )
-          const ask = constructAsk(cur, BigNumber.from(200))
+          const ask = constructAsk(cur, BigNumber.from(201))
 
-          const preciseBidShares = {
-            creator: Decimal.new(33.3333),
-            owner: Decimal.new(33.3333),
-            prevOwner: Decimal.new(33.3334),
-          }
-
-          await wonzimer.mint(defaultMediaData, preciseBidShares)
+          await wonzimer.mint(defaultMediaData)
           const isValid = await wonzimer.isValidAsk(0, ask)
           expect(isValid).toEqual(false)
         })
@@ -1249,7 +1134,7 @@ describe('Wonzimer', () => {
             sha256FromBuffer(kanyeBuf),
             sha256FromBuffer(helloWorldBuf)
           )
-          await wonzimer.mint(mediaData, defaultBidShares)
+          await wonzimer.mint(mediaData)
 
           const verified = await wonzimer.isVerifiedMedia(0)
           expect(verified).toEqual(true)
@@ -1279,7 +1164,7 @@ describe('Wonzimer', () => {
             sha256FromBuffer(kanyeBuf),
             sha256FromBuffer(helloWorldBuf)
           )
-          await wonzimer.mint(mediaData, defaultBidShares)
+          await wonzimer.mint(mediaData)
 
           const verified = await wonzimer.isVerifiedMedia(0)
           expect(verified).toEqual(false)

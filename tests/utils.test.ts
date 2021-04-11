@@ -2,7 +2,6 @@ import {
   approveERC20,
   constructAsk,
   constructBid,
-  constructBidShares,
   constructMediaData,
   isMediaDataVerified,
   isURIHashVerified,
@@ -14,14 +13,13 @@ import {
   signMintWithSigMessage,
   signPermitMessage,
   stripHexPrefix,
-  validateBidShares,
   validateBytes32,
   validateURI,
   wrapETH,
   unwrapWETH,
 } from '../src/utils'
 import { promises as fs } from 'fs'
-import { Decimal, Wonzimer } from '../src'
+import { Wonzimer } from '../src'
 import { Blockchain, generatedWallets } from '@wonzimer/core/dist/utils'
 import { JsonRpcProvider } from '@ethersproject/providers'
 import { mintCurrency, setupWonzimer, WonzimerConfiguredAddresses } from './helpers'
@@ -191,78 +189,39 @@ describe('Utils', () => {
       })
     })
 
-    describe('#constructBidShares', () => {
-      it('it raises if the BidShares do not exactly sum to 100 with 18 decimals', () => {
-        expect(() => {
-          constructBidShares(25, 24.44445, 50.55555)
-        }).toThrow(
-          `The BidShares sum to 99999900000000000000, but they must sum to 100000000000000000000`
-        )
-      })
-
-      it('it fixes 4 decimal points of precision', () => {
-        const bidShares = constructBidShares(25, 24.44455, 50.5555)
-        expect(bidShares.owner.value.toString()).toBe(
-          Decimal.new(24.4445).value.toString()
-        )
-      })
-
-      it('it rounds up to the 4th decimal point of precision', () => {
-        const bidShares = constructBidShares(25, 24.44449, 50.5555)
-        expect(bidShares.owner.value.toString()).toBe(
-          Decimal.new(24.4445).value.toString()
-        )
-      })
-    })
-
     describe('#constructAsk', () => {
       const dai = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
-      const decimal100 = Decimal.new(100)
+      const decimal100 = BigNumber.from(100)
 
       it('creates an ask', () => {
-        const ask = constructAsk(dai, decimal100.value)
+        const ask = constructAsk(dai, decimal100)
         expect(ask.currency.toLowerCase()).toBe(dai.toLowerCase())
-        expect(ask.amount.toString()).toBe(decimal100.value.toString())
+        expect(ask.amount.toString()).toBe(decimal100.toString())
       })
 
       it('raises if an invalid currency address is specified', () => {
         expect(() => {
-          constructAsk(dai.substr(0, 38), decimal100.value)
+          constructAsk(dai.substr(0, 38), decimal100)
         }).toThrow(`${dai.substr(0, 38)} is not a valid address.`)
       })
     })
 
     describe('#constructBid', () => {
       const dai = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
-      const decimal100 = Decimal.new(100)
+      const decimal100 = BigNumber.from(100)
       const bidder = '0xf13090cC20613BF9b5F0b3E6E83CCAdB5Cd0FbD5'
 
       it('creates a Bid', () => {
-        const bid = constructBid(dai, decimal100.value, bidder, bidder, 10)
+        const bid = constructBid(dai, decimal100, bidder, bidder)
         expect(bid.currency.toLowerCase()).toBe(dai.toLowerCase())
-        expect(bid.amount.toString()).toBe(decimal100.value.toString())
+        expect(bid.amount.toString()).toBe(decimal100.toString())
         expect(bid.bidder.toLowerCase()).toBe(bidder.toLowerCase())
         expect(bid.recipient.toLowerCase()).toBe(bidder.toLowerCase())
-        expect(bid.sellOnShare.value.toString()).toBe(Decimal.new(10).value.toString())
-      })
-
-      it('it fixes the sell on share precision to 4 decimal places', () => {
-        const bid = constructBid(dai, decimal100.value, bidder, bidder, 10.1111111111)
-        expect(bid.sellOnShare.value.toString()).toBe(
-          Decimal.new(10.1111).value.toString()
-        )
-      })
-
-      it('rounds up to the 4th decimal place of the sell on share', () => {
-        const bid = constructBid(dai, decimal100.value, bidder, bidder, 10.11119999)
-        expect(bid.sellOnShare.value.toString()).toBe(
-          Decimal.new(10.1112).value.toString()
-        )
       })
 
       it('raises if an invalid currency address is specified', () => {
         expect(() => {
-          constructBid(dai.substr(0, 38), decimal100.value, bidder, bidder, 10)
+          constructBid(dai.substr(0, 38), decimal100, bidder, bidder)
         }).toThrow(
           `Currency address is invalid: Invariant failed: ${dai.substr(
             0,
@@ -273,7 +232,7 @@ describe('Utils', () => {
 
       it('raises if an invalid bidder address is specified', () => {
         expect(() => {
-          constructBid(dai, decimal100.value, bidder.substr(0, 10), bidder, 10)
+          constructBid(dai, decimal100, bidder.substr(0, 10), bidder)
         }).toThrow(
           `Bidder address is invalid: Invariant failed: ${bidder.substr(
             0,
@@ -284,7 +243,7 @@ describe('Utils', () => {
 
       it('raises if an invalid recipient address is specified', () => {
         expect(() => {
-          constructBid(dai, decimal100.value, bidder, bidder.substr(0, 10), 10)
+          constructBid(dai, decimal100, bidder, bidder.substr(0, 10))
         }).toThrow(
           `Recipient address is invalid: Invariant failed: ${bidder.substr(
             0,
@@ -381,40 +340,6 @@ describe('Utils', () => {
     })
   })
 
-  describe('#validateBidShares', () => {
-    it('raises if the bid shares do no sum to `Decimal.new(100).value`', () => {
-      const invalidBidShares = {
-        prevOwner: Decimal.new(10),
-        owner: Decimal.new(70),
-        creator: Decimal.new(10),
-      }
-      expect(() => {
-        validateBidShares(
-          invalidBidShares.creator,
-          invalidBidShares.owner,
-          invalidBidShares.prevOwner
-        )
-      }).toThrow(
-        'Invariant failed: The BidShares sum to 90000000000000000000, but they must sum to 100000000000000000000'
-      )
-    })
-
-    it('does not raise if the bid shares sum to `Decimal.new(100).value', () => {
-      const invalidBidShares = {
-        prevOwner: Decimal.new(10),
-        owner: Decimal.new(80),
-        creator: Decimal.new(10),
-      }
-      expect(() => {
-        validateBidShares(
-          invalidBidShares.creator,
-          invalidBidShares.owner,
-          invalidBidShares.prevOwner
-        )
-      }).not.toThrow()
-    })
-  })
-
   describe('#stripHexPrefix', () => {
     let prefixed: string
     let nonPrefixed: string
@@ -496,8 +421,7 @@ describe('Utils', () => {
           contentHash,
           metadataHash
         )
-        const bidShares = constructBidShares(10, 90, 0)
-        await mainWonzimer.mint(mediaData, bidShares)
+        await mainWonzimer.mint(mediaData)
 
         const deadline = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24 // 24 hours
         const domain = mainWonzimer.eip712Domain()
@@ -595,7 +519,6 @@ describe('Utils', () => {
           mainWallet,
           contentHash,
           metadataHash,
-          Decimal.new(10).value,
           1,
           deadline,
           domain
@@ -604,7 +527,6 @@ describe('Utils', () => {
         const recovered = await recoverSignatureFromMintWithSig(
           contentHash,
           metadataHash,
-          Decimal.new(10).value,
           1,
           deadline,
           domain,
@@ -634,7 +556,6 @@ describe('Utils', () => {
           contentHash,
           metadataHash
         )
-        const bidShares = constructBidShares(10, 90, 0)
         const deadline = Math.floor(new Date().getTime() / 1000) + 60 * 60 * 24 // 24 hours
         const domain = otherWonzimer.eip712Domain()
         const nonce = await otherWonzimer.fetchMintWithSigNonce(mainWallet.address)
@@ -642,19 +563,17 @@ describe('Utils', () => {
           mainWallet,
           contentHash,
           metadataHash,
-          Decimal.new(10).value,
           nonce.toNumber(),
           deadline,
           domain
         )
 
-        await otherWonzimer.mintWithSig(mainWallet.address, mediaData, bidShares, eipSig)
+        await otherWonzimer.mintWithSig(mainWallet.address, mediaData, eipSig)
         const owner = await otherWonzimer.fetchOwnerOf(0)
         const creator = await otherWonzimer.fetchCreator(0)
         const onChainContentHash = await otherWonzimer.fetchContentHash(0)
         const onChainMetadataHash = await otherWonzimer.fetchMetadataHash(0)
 
-        const onChainBidShares = await otherWonzimer.fetchCurrentBidShares(0)
         const onChainContentURI = await otherWonzimer.fetchContentURI(0)
         const onChainMetadataURI = await otherWonzimer.fetchMetadataURI(0)
 
@@ -664,9 +583,6 @@ describe('Utils', () => {
         expect(onChainContentURI).toBe(contentURI)
         expect(onChainMetadataURI).toBe(metadataURI)
         expect(onChainMetadataHash).toBe(metadataHash)
-        expect(onChainBidShares.creator.value).toEqual(bidShares.creator.value)
-        expect(onChainBidShares.owner.value).toEqual(bidShares.owner.value)
-        expect(onChainBidShares.prevOwner.value).toEqual(bidShares.prevOwner.value)
       })
     })
 
@@ -700,7 +616,6 @@ describe('Utils', () => {
           mainWallet,
           contentHash,
           metadataHash,
-          Decimal.new(10).value,
           1,
           deadline,
           domain
@@ -709,7 +624,6 @@ describe('Utils', () => {
         const recovered = await recoverSignatureFromMintWithSig(
           contentHash,
           metadataHash,
-          Decimal.new(10).value,
           2,
           deadline,
           domain,
