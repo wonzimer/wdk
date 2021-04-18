@@ -1343,10 +1343,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@wonzimer/core@^1.0.10":
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/@wonzimer/core/-/core-1.0.10.tgz#c71781b8883db27f986eb4c9c55f42d4e89b2fa3"
-  integrity sha512-nCtDGAvQ3F5/ub5SF91NeXwbNDohCueIPf+/UIRAFGVRAGDcRTWmMkbFtLSQRcHTGNuZZx4zsWzdFjQQC0+Ejg==
+"@wonzimer/core@^1.0.11":
+  version "1.0.11"
+  resolved "https://registry.yarnpkg.com/@wonzimer/core/-/core-1.0.11.tgz#15d48d3468607647d8106ef5a8c68f3bd91fd412"
+  integrity sha512-NVDZ420Y1X5eIGLtnulP4TQRI/iVqigf8B/B++VIKFTDSmJ8lQpHLfL9HTXbfTwPSp3GP9TlnV0E7ssa938jzg==
   dependencies:
     ethers "^5.0.19"
     truffle-flattener "^1.5.0"
