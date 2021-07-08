@@ -33,7 +33,7 @@ The constructor can optionally accept two parameters to `override` the official 
 #### Mainnet
 
 ```typescript
-import { Wonzimer } from '@wonzimer/wdk'
+import { Wonzimer } from '@wonzimer-nft/wdk'
 import { Wallet } from 'ethers'
 
 const wallet = Wallet.createRandom()
@@ -44,7 +44,7 @@ await wonzimer.totalSupply()
 #### Rinkeby
 
 ```typescript
-import { Wonzimer } from '@wonzimer/wdk'
+import { Wonzimer } from '@wonzimer-nft/wdk'
 import { Wallet } from 'ethers'
 
 const wallet = Wallet.createRandom()
@@ -57,7 +57,7 @@ await wonzimer.totalSupply()
 When using a local blockchain you must specify overrides for both `mediaAddress` and `marketAddress`. These should point to the addresses of deployed Wonzimer Media and Market contracts on your local blockchain.
 
 ```typescript
-import { Wonzimer } from '@wonzimer/wdk'
+import { Wonzimer } from '@wonzimer-nft/wdk'
 import { Wallet } from 'ethers'
 
 const wallet = Wallet.createRandom()

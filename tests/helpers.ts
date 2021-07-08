@@ -2,7 +2,7 @@ import {
   BaseErc20Factory,
   MarketFactory,
   MediaFactory,
-} from '@wonzimer/core/dist/typechain'
+} from '@wonzimer-nft/core/dist/typechain'
 import { Wallet } from '@ethersproject/wallet'
 import { BigNumber } from '@ethersproject/bignumber'
 import { ContractTransaction } from '@ethersproject/contracts'

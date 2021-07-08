@@ -6,7 +6,7 @@ Bids are denominated in an ERC-20 of the bidder's choice. To construct a bid use
 **Note**: Placing a bid on a piece of cryptomedia requires that you deposit funds into the Wonzimer Market contract. In order to successfully place a bid you must `approve` the Wonzimer Market Contract to transfer your funds. You can use the `approveERC20` method to do this.
 
 ```typescript
-import { Wonzimer, constructBid, Decimal, approveERC20 } from '@wonzimer/wdk'
+import { Wonzimer, constructBid, Decimal, approveERC20 } from '@wonzimer-nft/wdk'
 import { Wallet } from 'ethers'
 import { MaxUint256 } from '@ethersproject/constants'
 

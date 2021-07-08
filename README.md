@@ -20,7 +20,7 @@ The ZDK has 4 primary exports plus some types:
 ### Installation
 
 ```bash
-yarn add @wonzimer/wdk
+yarn add @wonzimer-nft/wdk
 ```
 
 ### Guides
