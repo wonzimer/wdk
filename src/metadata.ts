@@ -5,8 +5,8 @@ import {
   validateVersion,
   supportedVersions,
   supportedVersionsTypeMapping,
-} from '@wonzimer/media-metadata-schemas/dist/src'
-import * as MetadataTypes from '@wonzimer/media-metadata-schemas/dist/types/types'
+} from '@wonzimer-nft/media-metadata-schemas/dist/src'
+import * as MetadataTypes from '@wonzimer-nft/media-metadata-schemas/dist/types/types'
 
 export { MetadataTypes }
 export { validateVersion, supportedVersions, supportedVersionsTypeMapping }

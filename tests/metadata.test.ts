@@ -1,5 +1,5 @@
 import { generateMetadata, parseMetadata, validateMetadata } from '../src'
-import { Wonzimer20210101 } from '@wonzimer/media-metadata-schemas'
+import { Wonzimer20210101 } from '@wonzimer-nft/media-metadata-schemas'
 
 describe('Metadata', () => {
   function isWonzimer20210101(json: Object): json is Wonzimer20210101 {

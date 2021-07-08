@@ -1,5 +1,5 @@
-import rinkebyAddresses from '@wonzimer/core/dist/addresses/4.json'
-import mainnetAddresses from '@wonzimer/core/dist/addresses/1.json'
+import rinkebyAddresses from '@wonzimer-nft/core/dist/addresses/4.json'
+import mainnetAddresses from '@wonzimer-nft/core/dist/addresses/1.json'
 
 interface AddressBook {
   [key: string]: {

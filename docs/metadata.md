@@ -11,7 +11,7 @@ As such, the `media-metadata-schemas` [repository](https://github.com/ourwonzime
 Given a schema version and some nonformatted json it generates a valid, minified, alphabetized json
 
 ```typescript
-import { generateMetadata } from '@wonzimer/wdk'
+import { generateMetadata } from '@wonzimer-nft/wdk'
 
 const metadata = {
   version: 'wonzimer-20210101',
@@ -26,7 +26,7 @@ const minified = generateMetadata(metadata.version, metadata)
 ### Validate
 
 ```typescript
-import { validateMetadata } from '@wonzimer/wdk'
+import { validateMetadata } from '@wonzimer-nft/wdk'
 
 const metadata = {
   version: 'wonzimer-20210101',
@@ -41,7 +41,7 @@ const minified = validateMetadata(metadata.version, metadata)
 ### Parse
 
 ```typescript
-import { parseMetadata } from '@wonzimer/wdk'
+import { parseMetadata } from '@wonzimer-nft/wdk'
 
 const metadata = `
   {

@@ -3,7 +3,12 @@ import { BigNumber, BigNumberish } from '@ethersproject/bignumber'
 import { ContractTransaction } from '@ethersproject/contracts'
 import { Provider } from '@ethersproject/providers'
 import { Signer } from '@ethersproject/abstract-signer'
-import { Market, MarketFactory, Media, MediaFactory } from '@wonzimer/core/dist/typechain'
+import {
+  Market,
+  MarketFactory,
+  Media,
+  MediaFactory,
+} from '@wonzimer-nft/core/dist/typechain'
 import { addresses } from './addresses'
 import {
   chainIdToNetworkName,
@@ -64,6 +69,18 @@ export class Wonzimer {
    * Wonzimer View Methods
    *********************
    */
+
+  public async addToWhitelist(address: string): Promise<ContractTransaction> {
+    return this.media.addToWhitelist(address)
+  }
+
+  public async removeFromWhitelist(address: string): Promise<ContractTransaction> {
+    return this.media.removeFromWhitelist(address)
+  }
+
+  public async isWhitelisted(address: string): Promise<boolean> {
+    return this.media.isWhitelisted(address)
+  }
 
   /**
    * Fetches the content hash for the specified media on the Wonzimer Media Contract
@@ -222,6 +239,28 @@ export class Wonzimer {
     const gasEstimate = await this.media.estimateGas.mint(mediaData)
     const paddedEstimate = gasEstimate.mul(110).div(100)
     return this.media.mint(mediaData, { gasLimit: paddedEstimate })
+  }
+
+  /**
+   * Mints a new piece of media on an instance of the Wonzimer Media Contract
+   * @param mintData
+   * @param bidShares
+   */
+  public async mintForCreator(
+    creator: string,
+    mediaData: MediaData
+  ): Promise<ContractTransaction> {
+    try {
+      this.ensureNotReadOnly()
+      validateURI(mediaData.metadataURI)
+      validateURI(mediaData.tokenURI)
+    } catch (err) {
+      return Promise.reject(err.message)
+    }
+
+    const gasEstimate = await this.media.estimateGas.mintForCreator(creator, mediaData)
+    const paddedEstimate = gasEstimate.mul(110).div(100)
+    return this.media.mintForCreator(creator, mediaData, { gasLimit: paddedEstimate })
   }
 
   /**

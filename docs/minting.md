@@ -58,7 +58,7 @@ To generate this hash use any of the sha256 utils defined in [utils](../referenc
 #### Example
 
 ```typescript
-import { constructMediaData, sha256FromBuffer, generateMetadata } from '@wonzimer/wdk'
+import { constructMediaData, sha256FromBuffer, generateMetadata } from '@wonzimer-nft/wdk'
 
 const metadataJSON = generateMetadata('wonzimer-20210101', {
   description: '',
@@ -110,7 +110,7 @@ The equity (%) the previous owner gets from the next accepted bid of the piece o
 The Wonzimer Media Contract allows for 18 decimals of precision. To simplify precision, we created the `constructBidShares` method with accepts JS `numbers` and converts them to `ethers` `BigDecimal` types rounded to the **fourth** decimal.
 
 ```typescript
-import { constructBidShares } from '@wonzimer/wdk'
+import { constructBidShares } from '@wonzimer-nft/wdk'
 
 const bidShares = constructBidShares(
   10, // creator share
@@ -122,14 +122,14 @@ const bidShares = constructBidShares(
 ### All Together Now!
 
 ```typescript
-import { Wonzimer } from '@wonzimer/wdk'
+import { Wonzimer } from '@wonzimer-nft/wdk'
 import { Wallet } from 'ethers'
 import {
   constructBidShares,
   constructMediaData,
   sha256FromBuffer,
   generateMetadata,
-} from '@wonzimer/wdk'
+} from '@wonzimer-nft/wdk'
 
 const wallet = Wallet.createRandom()
 const wonzimer = new Wonzimer(wallet, 4)

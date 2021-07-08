@@ -1,7 +1,7 @@
 {
-  "name": "@wonzimer/wdk",
+  "name": "@wonzimer-nft/wdk",
   "description": "An SDK for using the Wonzimer Protocol",
-  "version": "1.0.3",
+  "version": "1.0.9",
   "main": "dist/src/index.js",
   "typings": "dist/src/index.d.ts",
   "files": [
@@ -22,8 +22,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@wonzimer/core": "^1.0.10",
-    "@wonzimer/media-metadata-schemas": "^1.0.0",
+    "@wonzimer-nft/core": "^1.0.14",
+    "@wonzimer-nft/media-metadata-schemas": "^1.0.0",
     "axios": "^0.21.1",
     "eth-sig-util": "^3.0.0",
     "ethereumjs-util": "^7.0.7",
